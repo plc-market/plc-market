@@ -29,7 +29,7 @@ GitHub'da depo sayfası › **Settings** › **Secrets and variables** › **Act
 - `FTP_PASSWORD`: İHS panelinde **FTP Şifre Değişikliği** ile belirlenen şifre
 
 **Variables** sekmesi (gerekirse):
-- `FTP_DIR`: Web kök klasörü, sonu `/` ile biter. FTP girişinde doğrudan sitenin klasörü açılıyorsa `./` (varsayılan), açılmıyorsa örneğin `httpdocs/`.
+- `FTP_DIR`: Web kök klasörü, sonu `/` ile biter. Varsayılan `httpdocs/` (İHS'de sitenin klasörü).
 - `FTP_PROTOCOL`: Varsayılan `ftps` (şifreli). Sunucu desteklemiyorsa `ftp`.
 - `FTP_SECURITY`: Varsayılan `loose`. Paylaşımlı sunucunun FTP sertifikası alan adıyla eşleşmeyebileceği için sertifika adı denetlenmez; bağlantı yine şifrelidir.
 - `HTTPS_REDIRECT`: SSL kurulduktan sonra `1` yapılır; http adresleri https'e yönlenir.
