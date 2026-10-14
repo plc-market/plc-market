@@ -1,0 +1,47 @@
+# main dalına her gönderimde siteyi hazırlar ve FTP ile İHS'deki barındırmaya yükler.
+# Gerekli gizli değerler (Settings > Secrets and variables > Actions > Secrets):
+#   FTP_SERVER    ör. ftp.plc-market.com.tr
+#   FTP_USERNAME  İHS FTP kullanıcı adı
+#   FTP_PASSWORD  İHS FTP şifresi
+# İsteğe bağlı değişkenler (aynı sayfada Variables sekmesi):
+#   FTP_DIR         web kök klasörü, sonu / ile biter (ör. httpdocs/ ya da ./). Varsayılan: ./
+#   FTP_PROTOCOL    ftps (varsayılan) ya da ftp
+#   HTTPS_REDIRECT  1 olursa http adresleri https'e yönlenir (SSL kurulduktan sonra)
+name: Siteyi İHS'ye yükle
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Siteyi hazırla
+        env:
+          HTTPS_REDIRECT: ${{ vars.HTTPS_REDIRECT }}
+        run: python3 tools/build_site.py src/plc-market.html site
+
+      - name: FTP bilgileri eksik
+        if: env.FTP_SERVER == ''
+        run: echo "::notice::FTP_SERVER, FTP_USERNAME ve FTP_PASSWORD gizli değerleri tanımlanmadığı için yükleme atlandı."
+
+      - name: FTP ile yükle
+        if: env.FTP_SERVER != ''
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          local-dir: ./site/
+          server-dir: ${{ vars.FTP_DIR || './' }}
