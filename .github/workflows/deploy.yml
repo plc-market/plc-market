@@ -7,7 +7,7 @@
 #   FTP_DIR         web kök klasörü, sonu / ile biter. Varsayılan: httpdocs/ (İHS)
 #   FTP_PROTOCOL    ftps (varsayılan) ya da ftp
 #   FTP_SECURITY    loose (varsayılan; paylaşımlı sunucunun sertifikası alan adıyla eşleşmeyebilir) ya da strict
-#   HTTPS_REDIRECT  1 olursa http adresleri https'e yönlenir (SSL kurulduktan sonra)
+#   HTTPS_REDIRECT  1 (varsayılan): http adresleri https'e yönlenir. 0 yapılırsa yönlendirme kapanır.
 name: Siteyi İHS'ye yükle
 
 on:
@@ -29,7 +29,7 @@ jobs:
 
       - name: Siteyi hazırla
         env:
-          HTTPS_REDIRECT: ${{ vars.HTTPS_REDIRECT }}
+          HTTPS_REDIRECT: ${{ vars.HTTPS_REDIRECT || '1' }}
         run: python3 tools/build_site.py src/plc-market.html site
 
       - name: FTP bilgileri eksik

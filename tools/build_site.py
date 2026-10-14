@@ -37,7 +37,7 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 '''
-HTTPS_OFF = '''# http -> https yönlendirmesi kapalı. SSL kurulunca GitHub'da HTTPS_REDIRECT değişkenini 1 yapın.
+HTTPS_OFF = '''# http -> https yönlendirmesi kapalı (HTTPS_REDIRECT=0).
 '''
 open(os.path.join(outdir, '.htaccess'), 'w').write('''# PLC Market demo
 DirectoryIndex index.html

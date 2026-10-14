@@ -32,7 +32,7 @@ GitHub'da depo sayfası › **Settings** › **Secrets and variables** › **Act
 - `FTP_DIR`: Web kök klasörü, sonu `/` ile biter. Varsayılan `httpdocs/` (İHS'de sitenin klasörü).
 - `FTP_PROTOCOL`: Varsayılan `ftps` (şifreli). Sunucu desteklemiyorsa `ftp`.
 - `FTP_SECURITY`: Varsayılan `loose`. Paylaşımlı sunucunun FTP sertifikası alan adıyla eşleşmeyebileceği için sertifika adı denetlenmez; bağlantı yine şifrelidir.
-- `HTTPS_REDIRECT`: SSL kurulduktan sonra `1` yapılır; http adresleri https'e yönlenir.
+- `HTTPS_REDIRECT`: Varsayılan `1`; http adresleri https'e yönlenir. SSL'de sorun olursa `0` yapılarak kapatılır.
 
 Yayını elle başlatmak için: **Actions** › **Siteyi İHS'ye yükle** › **Run workflow**.
 
