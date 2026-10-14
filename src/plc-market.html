@@ -756,7 +756,7 @@ pre.order{margin:14px 0 0;padding:14px;background:var(--surface);border:1px soli
 document.documentElement.lang="tr";
 const KDV=0.20, FREE=100, SHIP=3, PAGE=24, RATE0=55.2121, RATE_DATE="13.10.2026", BASE_RATE=55.2105;
 const $=s=>document.querySelector(s);
-const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const TL=new Intl.NumberFormat("tr-TR",{style:"currency",currency:"TRY"});
 const EUR=new Intl.NumberFormat("tr-TR",{style:"currency",currency:"EUR"});
 const RT=new Intl.NumberFormat("tr-TR",{minimumFractionDigits:4,maximumFractionDigits:4});
@@ -1037,7 +1037,7 @@ buildCatalog(JSON.parse(document.getElementById("katalog-data").textContent));
 const pic=(p,act)=>'<button class="pic" data-act="open" data-id="'+p.id+'" aria-label="'+esc(p.name)+' ayrıntıları">'+vis(p)+"</button>";
 
 /* ---------- durum ---------- */
-const S={view:"home",q:"",cat:"all",l2:null,grp:null,megaCat:null,brands:new Set(),inStock:false,sort:"rel",layout:"grid",vat:false,shown:PAGE,cart:{},mode:"order",cur:"EUR",rate:RATE0,rateDate:RATE_DATE,rateSrc:"TCMB döviz satış",htab:"projeler",ytab:"uyeler"};
+const S={view:"home",q:"",cat:"all",l2:null,grp:null,megaCat:null,brands:new Set(),inStock:false,sort:"rel",layout:"grid",vat:false,shown:PAGE,cart:{},mode:"order",cur:"EUR",rate:RATE0,rateDate:RATE_DATE,rateSrc:"TCMB döviz satış",htab:"projeler",atab:"giris",ytab:"uyeler"};
 try{const c=JSON.parse(localStorage.getItem("kt-cart")||"{}");for(const k in c)if(BY[k]&&c[k]>0)S.cart[k]=Math.min(9999,Math.floor(c[k]));S.vat=localStorage.getItem("kt-vat")==="1";if(localStorage.getItem("kt-layout")==="rows")S.layout="rows";if(localStorage.getItem("kt-cur")==="TRY")S.cur="TRY"}catch(e){}
 const save=()=>{try{localStorage.setItem("kt-cart",JSON.stringify(S.cart));localStorage.setItem("kt-vat",S.vat?"1":"0");localStorage.setItem("kt-layout",S.layout);localStorage.setItem("kt-cur",S.cur)}catch(e){}};
 
@@ -1250,9 +1250,10 @@ async function onFile(f){if(!f)return;if(!/\.xlsx$/i.test(f.name)){admMsg('<p cl
       '<div class="bar"><button class="btn primary" data-act="xpub"'+(c.ok?"":" disabled")+'>Siteye yayınla</button><button class="btn" data-act="xcancel">Vazgeç</button></div></div>')}
   catch(e){PENDING=null;admMsg('<p class="err">Dosya okunamadı: '+esc(e&&e.message||e)+"</p>")}}
 async function publishCat(){if(!PENDING)return;const A=CAPS.assets,D=CAPS.db;
-  if(!A||!D){admMsg('<p class="err">Bu görünümde yayınlama yapılamıyor. Sayfayı claude.ai üzerinden, düzenleme yetkisiyle açın.</p>');return}
+  if(!A||!D){admMsg('<p class="err">'+(window.PLC_SITE?"Yayınlamak için yönetici hesabınızla giriş yapın.":"Bu görünümde yayınlama yapılamıyor. Sayfayı claude.ai üzerinden, düzenleme yetkisiyle açın.")+'</p>');return}
   admMsg('<p class="hint">Yayınlanıyor…</p>');
-  try{const j=await A.upload(new Blob([JSON.stringify(PENDING.rows)],{type:"application/json"}),{type:"application/json"});
+  try{const pub=window.PLC_SITE?PENDING.rows.map(r=>{const o=Object.assign({},r);delete o.m;delete o.b;return o}):PENDING.rows;
+    const j=await A.upload(new Blob([JSON.stringify(pub)],{type:"application/json"}),{type:"application/json"});
     const x=await A.upload(new Blob([b64(PENDING.buf)],{type:"text/plain"}),{type:"text/plain"});
     const meta={json:j.id,xlsx:x.id,ad:PENDING.name,tarih:new Date().toISOString(),aktif:PENDING.c.ok,toplam:PENDING.total};
     await D.doc("katalog/aktif").set(meta);applyCat(PENDING.rows,meta);PENDING=null;
@@ -1261,7 +1262,7 @@ async function publishCat(){if(!PENDING)return;const A=CAPS.assets,D=CAPS.db;
 function applyCat(rows,meta){buildCatalog(rows);Object.assign(CATSRC,{kind:"yuklendi",ad:meta.ad,tarih:meta.tarih,xlsx:meta.xlsx,json:meta.json});
   if(S.view==="list"&&S.grp&&!GR[S.grp])go({cat:"all"});renderView();renderCart();if(ADMIN)renderAdminSrc();$("#dl-sku").innerHTML=P.map(p=>'<option value="'+p.id+'">'+esc(p.name.slice(0,60))+"</option>").join("")}
 async function downloadXlsx(){const dl=CAPS.downloads;if(!dl){toast("Bu görünümde dosya indirme kullanılamıyor.");return}
-  try{const t=await (await fetch(CATSRC.xlsx?"/_blob/"+CATSRC.xlsx:"katalog.xlsx.b64.txt")).text();
+  try{const t=!CATSRC.xlsx&&window.PLC_SITE?await PLC_SITE.defaultXlsx():await (await fetch(CATSRC.xlsx?"/_blob/"+CATSRC.xlsx:"katalog.xlsx.b64.txt")).text();
     const name=CATSRC.kind==="dahili"?CATSRC.ad:CATSRC.ad.replace(/\.xlsx$/i,"")+".xlsx";
     await dl.save({filename:name,data:new Blob([unb64(t)])});toast("Excel indirildi")}
   catch(e){if(e&&e.code==="declined")return;toast("İndirilemedi: "+(e&&(e.message||e.code)||"bilinmeyen hata"))}}
@@ -1480,7 +1481,7 @@ const nowISO=()=>new Date().toISOString();
 const ub=()=>"uyeler/"+M.id;
 const imap=arr=>{const o={};(arr||[]).forEach(x=>{if(x&&x.s&&x.q>0)o[x.s]=(o[x.s]||0)+Math.floor(x.q)});return o};
 const iarr=o=>Object.keys(o).filter(k=>o[k]>0).map(k=>({s:k,q:o[k]}));
-const dfmt=t=>{try{return new Date(t).toLocaleDateString("tr-TR",{day:"2-digit",month:"short",year:"numeric"})}catch(e){return""}};
+const dfmt=t=>{if(!t)return"";try{const d=new Date(t);if(isNaN(d))return"";return d.toLocaleDateString("tr-TR",{day:"2-digit",month:"short",year:"numeric"})}catch(e){return""}};
 const PF=[["firma","Firma unvanı",1,"organization"],["vd","Vergi dairesi",1],["vno","Vergi no / TC kimlik no",1],["adres","Fatura adresi",1,"street-address","full"],["il","İl",1,"address-level1"],["ilce","İlçe",1,"address-level2"],["pk","Posta kodu",0,"postal-code"],
  ["yetkili","Yetkili adı soyadı",1,"name"],["gorev","Görevi",0],["tel","Telefon",1,"tel"],["gsm","Cep telefonu",0,"tel"],["eposta","E-posta",1,"email"]];
 function profForm(p,isNew){const f=(k,l,r,ac,cls)=>'<div class="field'+(cls?" "+cls:"")+'"><label for="pf-'+k+'">'+l+(r?' <span class="req">*</span>':"")+'</label><input id="pf-'+k+'" value="'+esc(p[k]||"")+'"'+(ac?' autocomplete="'+ac+'"':"")+(k==="eposta"?' type="email"':k==="tel"||k==="gsm"?' type="tel"':"")+"></div>";
@@ -1502,16 +1503,37 @@ async function saveProfile(isNew){const g=k=>{const e=$("#pf-"+k);return e?e.val
   const d={};PF.forEach(x=>d[x[0]]=g(x[0]));d.vno=vno;d.ayni=same;if(!same){d.tadres=g("tadres");d.til=g("til");d.tilce=g("tilce")}
   d.kayit=(M.prof&&M.prof.kayit)||nowISO();d.guncel=nowISO();if(isNew)d.kvkk=nowISO();else if(M.prof&&M.prof.kvkk)d.kvkk=M.prof.kvkk;
   err.hidden=true;try{await CAPS.db.doc(ub()).set(d);if(isNew){S.htab="projeler";toast("Üyeliğiniz oluşturuldu");renderHesap()}else $("#pf-ok").textContent="Kaydedildi."}
-  catch(e){bad("Kaydedilemedi. Bu sayfada üyelik için sayfayı kullanma yetkiniz olmalı; site sahibinden sizi katkıda bulunan olarak eklemesini isteyin.")}}
-function noMember(){return'<div class="pcard" style="max-width:720px"><h2>Üyelik</h2><p>Üyelik; proje sepetleri oluşturmanızı, siparişlerinizi takip etmenizi ve önceki siparişlerinizi tekrar vermenizi sağlar.</p><p class="warnbox">Bu önizlemede üyelik, sayfaya oturum açarak ve sayfayı kullanma yetkisiyle erişen kişilere açıktır. Siteye bu şekilde eriştiğinizde bu bölümden üye olabilirsiniz.</p></div>'}
+  catch(e){bad(window.PLC_SITE?"Kaydedilemedi: "+(e&&e.message||"bağlantı hatası")+". Oturumunuz kapandıysa yeniden giriş yapın.":"Kaydedilemedi. Bu sayfada üyelik için sayfayı kullanma yetkiniz olmalı; site sahibinden sizi katkıda bulunan olarak eklemesini isteyin.")}}
+function noMember(){if(window.PLC_SITE)return authBox();return'<div class="pcard" style="max-width:720px"><h2>Üyelik</h2><p>Üyelik; proje sepetleri oluşturmanızı, siparişlerinizi takip etmenizi ve önceki siparişlerinizi tekrar vermenizi sağlar.</p><p class="warnbox">Bu önizlemede üyelik, sayfaya oturum açarak ve sayfayı kullanma yetkisiyle erişen kişilere açıktır. Siteye bu şekilde eriştiğinizde bu bölümden üye olabilirsiniz.</p></div>'}
+function authBox(){const reg=S.atab==="kayit";
+  return'<div class="pcard auth" style="max-width:480px"><h2>'+(reg?"Üye ol":"Giriş yap")+'</h2><p>Üyelik; proje sepetleri oluşturmanızı, siparişlerinizi takip etmenizi ve önceki siparişlerinizi tekrar vermenizi sağlar.</p>'+
+   '<div class="tabs" role="tablist" style="margin-bottom:6px"><button role="tab" data-act="atab" data-t="giris" aria-selected="'+!reg+'">Giriş yap</button><button role="tab" data-act="atab" data-t="kayit" aria-selected="'+reg+'">Üye ol</button></div>'+
+   '<form id="aform" novalidate><div class="form" style="grid-template-columns:minmax(0,1fr)">'+
+   '<div class="field"><label for="a-mail">E-posta</label><input id="a-mail" type="email" autocomplete="email" required></div>'+
+   '<div class="field"><label for="a-pass">Şifre'+(reg?" (en az 8 karakter)":"")+'</label><input id="a-pass" type="password" autocomplete="'+(reg?"new-password":"current-password")+'" required></div>'+
+   (reg?'<div class="field"><label for="a-pass2">Şifre tekrar</label><input id="a-pass2" type="password" autocomplete="new-password" required></div>':"")+
+   '</div><p class="err" id="a-err" hidden></p><div class="bar" style="margin-top:12px"><button class="btn primary" type="submit">'+(reg?"Hesap oluştur":"Giriş yap")+'</button></div>'+
+   '<p class="hint">'+(reg?"Hesabı oluşturduktan sonra firma ve iletişim bilgilerinizi girerek üyeliği tamamlarsınız.":"Şifrenizi unuttuysanız bize e-posta ya da telefonla ulaşın; size geçici bir şifre verelim.")+"</p></form></div>"}
+async function doAuth(){const reg=S.atab==="kayit",mail=$("#a-mail").value.trim(),pw=$("#a-pass").value,err=$("#a-err"),bad=m=>{err.textContent=m;err.hidden=false};
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail))return bad("E-posta adresi geçerli görünmüyor.");
+  if(reg){if(pw.length<8)return bad("Şifre en az 8 karakter olmalı.");if(pw!==$("#a-pass2").value)return bad("Şifreler aynı değil.")}else if(!pw)return bad("Şifrenizi yazın.");
+  err.hidden=true;try{await (reg?PLC_SITE.register(mail,pw):PLC_SITE.login(mail,pw));try{history.replaceState(null,"","#hesap")}catch(e){}location.reload()}catch(e){bad(e.message||"İşlem yapılamadı. Biraz sonra tekrar deneyin.")}}
+function pwBox(){return'<form id="pwform" class="pcard" novalidate style="margin-top:16px"><div class="fsec"><h3>Şifre değiştir</h3><div class="form">'+
+   '<div class="field"><label for="pw-old">Mevcut şifre</label><input id="pw-old" type="password" autocomplete="current-password"></div>'+
+   '<div class="field"><label for="pw-new">Yeni şifre (en az 8 karakter)</label><input id="pw-new" type="password" autocomplete="new-password"></div></div></div>'+
+   '<p class="err" id="pw-err" hidden></p><div class="bar"><button class="btn" type="submit">Şifreyi değiştir</button><span class="hint" id="pw-ok" style="margin:0"></span></div></form>'}
+async function doPw(){const o=$("#pw-old").value,n=$("#pw-new").value,err=$("#pw-err"),bad=m=>{err.textContent=m;err.hidden=false};
+  if(n.length<8)return bad("Yeni şifre en az 8 karakter olmalı.");err.hidden=true;
+  try{await PLC_SITE.passwd(o,n);$("#pw-old").value="";$("#pw-new").value="";$("#pw-ok").textContent="Şifreniz değişti."}catch(e){bad(e.message||"Şifre değiştirilemedi.")}}
 function cartSum(c){const it=imap(c.kalemler),t=totals(it);let out=0;for(const k in it){const p=BY[k];if(!p||p.stock!=null&&it[k]>p.stock)out++}return{it,t,n:Object.keys(it).length,out}}
 function renderHesap(){const el=$("#hesap");
   if(!M.avail){el.innerHTML=noMember();return}
   if(M.prof===undefined){el.innerHTML='<p class="hint">Hesap bilgileri yükleniyor…</p>';return}
-  if(!M.prof){el.innerHTML='<div class="sec-h"><div><h2>Üye ol</h2><p>Firma ve iletişim bilgilerinizi girin. <span class="req">*</span> işaretli alanlar zorunludur.</p></div></div>'+profForm({},true);return}
+  const out=window.PLC_SITE?'<div class="bar"><button class="btn sm" data-act="alogout">Çıkış yap</button></div>':"";
+  if(!M.prof){const su=window.PLC_SITE&&PLC_SITE.user();el.innerHTML='<div class="sec-h"><div><h2>Üye ol</h2><p>Firma ve iletişim bilgilerinizi girin. <span class="req">*</span> işaretli alanlar zorunludur.</p></div>'+out+'</div>'+profForm({eposta:su?su.email:""},true);return}
   const T=[["projeler","Proje sepetlerim",M.carts.length],["siparisler","Siparişlerim",M.orders.length],["bilgi","Firma bilgilerim",null]];
-  el.innerHTML='<div class="sec-h"><div><h2>'+esc(M.prof.firma)+'</h2><p>'+esc(M.prof.yetkili)+" · "+esc(M.prof.eposta)+'</p></div></div><div class="tabs" role="tablist">'+T.map(x=>'<button role="tab" data-act="htab" data-t="'+x[0]+'" aria-selected="'+(S.htab===x[0])+'">'+x[1]+(x[2]!=null?'<span class="c">'+x[2]+"</span>":"")+"</button>").join("")+'</div><div id="hpanel"></div>';
-  if(S.htab==="bilgi")$("#hpanel").innerHTML=profForm(M.prof,false);else if(S.htab==="siparisler")renderMyOrders();else renderProjeler()}
+  el.innerHTML='<div class="sec-h"><div><h2>'+esc(M.prof.firma)+'</h2><p>'+esc(M.prof.yetkili)+" · "+esc(M.prof.eposta)+'</p></div>'+out+'</div><div class="tabs" role="tablist">'+T.map(x=>'<button role="tab" data-act="htab" data-t="'+x[0]+'" aria-selected="'+(S.htab===x[0])+'">'+x[1]+(x[2]!=null?'<span class="c">'+x[2]+"</span>":"")+"</button>").join("")+'</div><div id="hpanel"></div>';
+  if(S.htab==="bilgi")$("#hpanel").innerHTML=profForm(M.prof,false)+(window.PLC_SITE?pwBox():"");else if(S.htab==="siparisler")renderMyOrders();else renderProjeler()}
 function renderProjeler(){const h=$("#hpanel");if(!h)return;if(M.sel&&!M.carts.find(c=>c.id===M.sel))M.sel=null;if(!M.sel&&M.carts[0])M.sel=M.carts[0].id;
   const L='<div class="plist"><div class="newp"><input id="pj-new" placeholder="Yeni proje adı, örn. Dolum hattı revizyonu" aria-label="Yeni proje sepeti adı"><button class="btn primary sm" data-act="pnew">Oluştur</button></div>'+
    (M.carts.length?M.carts.map(c=>{const x=cartSum(c);return'<button data-act="psel" data-pid="'+c.id+'" aria-current="'+(c.id===M.sel)+'"><b>'+esc(c.ad)+"</b><small>"+x.n+" kalem · "+money(x.t.sub)+" + KDV"+(x.out?" · "+x.out+" kalem stokta yok":"")+"</small><small>Güncelleme: "+dfmt(c.guncel)+"</small></button>"}).join(""):'<p class="hint">Henüz proje sepetiniz yok. Bir ad yazıp oluşturun ya da ürün ayrıntısında "Projeye ekle"yi kullanın.</p>')+"</div>";
@@ -1543,7 +1565,7 @@ const DURUM=["Alındı","Onaylandı","Hazırlanıyor","Kargoda","Tamamlandı","�
 const pillCls=d=>d==="Tamamlandı"?"pill tamam":d==="İptal"?"pill iptal":d==="Teklif bekliyor"||d==="Teklif verildi"?"pill teklif":"pill";
 function orderLines(o){return'<div class="tw"><table class="lines"><thead><tr><th>Ürün</th><th>Stok (şu an)</th><th class="r">Birim</th><th class="r">Adet</th><th class="r">Tutar</th></tr></thead><tbody>'+(o.kalemler||[]).map(r=>{const p=BY[r.s];return"<tr><td><div class=\"nm\"><span class=\"mono\">"+esc(r.s)+"</span><span>"+esc(r.n||"")+"</span></div></td><td>"+stockBadge(p,r.q)+'</td><td class="r num">'+EUR.format(r.u||0)+'</td><td class="r num">'+r.q+'</td><td class="r num">'+EUR.format(r.t||0)+"</td></tr>"}).join("")+"</tbody></table></div>"}
 function orderCard(o,admin){const quote=o.tur==="teklif";
-  return'<details class="ocard"><summary><div><b class="mono">'+esc(o.no||o.id)+"</b><small>"+dfmt(o.tarih)+(o.proje?" · Proje: "+esc(o.proje):"")+(admin&&o.uye?" · "+esc(o.uye.firma||""):"")+'</small></div><div><small>'+(quote?"Teklif talebi":"Sipariş")+" · "+(o.kalemler||[]).length+" kalem · "+esc(o.odeme||"")+'</small></div><div class="num" style="text-align:right"><b>'+EUR.format(o.toplam||0)+"</b><small>"+TL.format(o.tl||0)+'</small></div><div>'+
+  return'<details class="ocard"><summary><div><b class="mono">'+esc(o.no||o.id)+"</b><small>"+dfmt(o.tarih)+(o.proje?" · Proje: "+esc(o.proje):"")+(admin&&o.uye?" · "+esc(o.uye.firma||""):admin&&o.misafir?" · Üye değil: "+esc((o.teslimat||{}).firma||(o.teslimat||{}).ad||""):"")+'</small></div><div><small>'+(quote?"Teklif talebi":"Sipariş")+" · "+(o.kalemler||[]).length+" kalem · "+esc(o.odeme||"")+'</small></div><div class="num" style="text-align:right"><b>'+EUR.format(o.toplam||0)+"</b><small>"+TL.format(o.tl||0)+'</small></div><div>'+
    (admin?'<select data-oid="'+esc(o.id)+'" data-uid="'+esc(o.uid)+'" aria-label="Durum">'+(quote?["Teklif bekliyor","Teklif verildi","Siparişe döndü","İptal"]:DURUM).map(d=>"<option"+(d===o.durum?" selected":"")+">"+d+"</option>").join("")+"</select>":'<span class="'+pillCls(o.durum)+'">'+esc(o.durum||"")+"</span>")+"</div></summary>"+
    '<div class="ob">'+orderLines(o)+'<div class="hint" style="margin:0">Ara toplam '+EUR.format(o.ara||0)+" · KDV "+EUR.format(o.kdv||0)+" · Kargo "+(o.kargo?EUR.format(o.kargo):"ücretsiz")+" · Kur "+RT.format(o.kur||0)+" · Toplam "+TL.format(o.tl||0)+(o.not?"<br>Not: "+esc(o.not):"")+(admin&&o.teslimat?"<br>Teslimat: "+esc([o.teslimat.ad,o.teslimat.tel,o.teslimat.adres,o.teslimat.il].filter(Boolean).join(" · ")):"")+"</div>"+
    (admin?"":'<div class="bar"><button class="btn sm" data-act="ocopy" data-oid="'+esc(o.id)+'">Yeni proje sepetine kopyala</button><button class="btn sm" data-act="ocart" data-oid="'+esc(o.id)+'">Sepete aktar</button></div>')+"</div></details>"}
@@ -1551,6 +1573,7 @@ function prefillOrder(){const p=M.prof;if(!p)return;const set=(id,v)=>{const e=$
   set("#o-name",p.yetkili);set("#o-firm",p.firma);set("#o-tel",p.tel);set("#o-mail",p.eposta);
   set("#o-addr",p.ayni===false?p.tadres:p.adres);set("#o-city",p.ayni===false?[p.til,p.tilce].filter(Boolean).join(" / "):[p.il,p.ilce].filter(Boolean).join(" / "));set("#o-tax",[p.vd,p.vno].filter(Boolean).join(" / "))}
 async function saveOrder(x){const note=$("#done-note");
+  if(window.PLC_SITE&&CAPS.db&&!(M.avail&&M.prof))return saveGuest(x,note);
   if(!(M.avail&&M.prof&&CAPS.db)){note.textContent="Bu önizlemede üye olmadan verilen talepler kaydedilmez. Özeti kopyalayıp e-posta ya da mesajla gönderebilirsiniz. Üye olursanız siparişleriniz yönetim paneline iletilir ve Hesabım'da görünür.";return}
   const k=[];for(const id in CO.items){const p=BY[id];if(!p)continue;const q=CO.items[id],u=Math.round(p.price*(1-tier(q))*100)/100;k.push({s:id,n:p.name,q,u,t:Math.round(u*q*100)/100,stok:p.stock==null?null:p.stock})}
   const o={no:x.no,tur:x.quote?"teklif":"siparis",tarih:x.d.toISOString(),durum:x.quote?"Teklif bekliyor":"Alındı",proje:CO.proje||null,odeme:x.quote?"":x.pay,kalemler:k,ara:x.t.sub,kdv:x.t.kdv,kargo:x.t.ship,toplam:Math.round(x.t.total*100)/100,kur:x.rate,tl:x.tl,
@@ -1558,6 +1581,11 @@ async function saveOrder(x){const note=$("#done-note");
   try{await CAPS.db.doc(ub()+"/siparisler/"+x.no).set(o);note.textContent=(x.quote?"Teklif talebiniz":"Siparişiniz")+" kaydedildi ve yönetime iletildi. Durumunu Hesabım › Siparişlerim'den takip edebilirsiniz.";
     if(CO.pid){const c=getCart(CO.pid);if(c){c.sonSiparis={no:x.no,tarih:o.tarih};putCart(c,true)}}}
   catch(e){note.textContent="Kayıt yapılamadı; özeti kopyalayıp bize iletin. ("+(e&&e.code||"bağlantı hatası")+")"}}
+async function saveGuest(x,note){const k=[];for(const id in CO.items){if(BY[id])k.push({s:id,q:CO.items[id]})}
+  const o={no:x.no,tur:x.quote?"teklif":"siparis",odeme:x.quote?"":x.pay,kalemler:k,misafir:true,
+    teslimat:{ad:x.v("#o-name"),firma:x.v("#o-firm"),tel:x.v("#o-tel"),eposta:x.v("#o-mail"),adres:x.v("#o-addr"),il:x.v("#o-city"),vergi:x.v("#o-tax")},not:x.v("#o-note")||""};
+  try{await CAPS.db.doc("talepler/"+x.no).set(o);note.textContent=(x.quote?"Teklif talebiniz":"Siparişiniz")+" alındı ve yönetime iletildi. Sizinle verdiğiniz telefon ya da e-posta üzerinden iletişime geçeceğiz. Üye olursanız sonraki siparişlerinizi Hesabım'dan takip edebilirsiniz."}
+  catch(e){note.textContent="Talebiniz kaydedilemedi: "+(e&&e.message||"bağlantı hatası")+". Özeti kopyalayıp bize iletin."}}
 /* proje sepetine ekle penceresi */
 let PJ=null;
 function openPJ(src){PJ=src;renderPJ();openDlg($("#d-proj"))}
@@ -1573,13 +1601,14 @@ async function savePJ(){const sel=document.querySelector('input[name="pjsel"]:ch
   let c;if(sel.value==="__new"){c=await newCart(($("#pj-name")||{}).value,add);if(!c)return}
   else{c=getCart(sel.value);const m=imap(c.kalemler);for(const k in add)m[k]=Math.min(9999,(m[k]||0)+add[k]);c.kalemler=iarr(m);await putCart(c,true)}
   $("#d-proj").close();toast('"'+c.ad+'" proje sepetine eklendi');M.sel=c.id;if(S.view==="hesap")renderHesap()}
-function onMember(){const l=$("#acct-l");l.textContent=M.prof?(M.prof.firma||"Hesabım"):M.avail&&M.prof===null?"Üye ol":"Hesabım";
+function onMember(){const l=$("#acct-l");l.textContent=M.prof?(M.prof.firma||"Hesabım"):M.avail&&M.prof===null?"Üye ol":window.PLC_SITE?"Giriş yap":"Hesabım";
   if(S.view==="hesap"&&!(S.htab==="bilgi"&&M.prof&&$("#pform")))renderHesap();if($("#d-proj").open)renderPJ()}
 /* yönetim */
 const Y={loaded:false,loading:false,members:[],orders:[],sel:null,q:"",st:"",proj:{}};
 async function loadAdmin(){const db=CAPS.db;if(!db||!ADMIN||Y.loading)return;Y.loading=true;$("#yon-sub").textContent="Veriler yükleniyor…";
   try{const s=await db.collection("uyeler").get();Y.members=s.docs.map(d=>Object.assign({id:d.id},d.data()));
     const all=await Promise.all(Y.members.map(m=>db.collection("uyeler/"+m.id+"/siparisler").get().then(x=>x.docs.map(d=>Object.assign({id:d.id,uid:m.id},d.data()))).catch(()=>[])));
+    if(window.PLC_SITE){const g=await db.collection("talepler").get().catch(()=>({docs:[]}));all.push(g.docs.map(d=>Object.assign({id:d.id,uid:"",misafir:true},d.data())))}
     Y.orders=[].concat.apply([],all).sort((a,b)=>String(b.tarih).localeCompare(String(a.tarih)));Y.loaded=true;$("#yon-sub").textContent=Y.members.length+" üye · "+Y.orders.length+" sipariş ve teklif · "+new Date().toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})+" itibarıyla"}
   catch(e){$("#yon-sub").textContent="Veriler alınamadı: "+(e&&e.code||"bağlantı hatası")}
   Y.loading=false;renderYon()}
@@ -1600,7 +1629,7 @@ function renderYUyeler(){const el=$("#yp-uyeler");const q=low(Y.q);
 function memberDetail(m){const dl=a=>"<dl>"+a.filter(x=>x[1]).map(x=>"<dt>"+x[0]+"</dt><dd>"+esc(x[1])+"</dd>").join("")+"</dl>";const pj=Y.proj[m.id];
   if(pj===undefined){Y.proj[m.id]=null;CAPS.db.collection("uyeler/"+m.id+"/sepetler").get().then(s=>{Y.proj[m.id]=s.docs.map(d=>Object.assign({id:d.id},d.data()));if(Y.sel===m.id)renderYUyeler()}).catch(()=>{Y.proj[m.id]=[]})}
   const os=Y.orders.filter(o=>o.uid===m.id);
-  return'<div class="pcard" style="margin-top:16px"><div class="sec-h" style="margin:0"><div><h2>'+esc(m.firma)+'</h2><p>Kayıt: '+dfmt(m.kayit)+" · Son güncelleme: "+dfmt(m.guncel)+'</p></div><button class="btn sm" data-act="ysel" data-uid="">Kapat</button></div><div class="mdet"><div><p class="sub" style="margin-top:0">Cari bilgiler</p>'+dl([["Firma unvanı",m.firma],["Vergi dairesi",m.vd],["Vergi / TC no",m.vno],["Fatura adresi",m.adres],["İl / ilçe",[m.il,m.ilce].filter(Boolean).join(" / ")],["Posta kodu",m.pk]])+'</div><div><p class="sub" style="margin-top:0">İletişim</p>'+dl([["Yetkili",m.yetkili],["Görevi",m.gorev],["Telefon",m.tel],["Cep",m.gsm],["E-posta",m.eposta]])+'</div><div><p class="sub" style="margin-top:0">Teslimat</p>'+dl(m.ayni===false?[["Adres",m.tadres],["İl / ilçe",[m.til,m.tilce].filter(Boolean).join(" / ")]]:[["Adres","Fatura adresiyle aynı"]])+"</div></div>"+
+  return'<div class="pcard" style="margin-top:16px"><div class="sec-h" style="margin:0"><div><h2>'+esc(m.firma)+'</h2><p>Kayıt: '+dfmt(m.kayit)+" · Son güncelleme: "+dfmt(m.guncel)+'</p></div><div class="bar">'+(window.PLC_SITE?'<button class="btn sm" data-act="yreset" data-uid="'+esc(m.id)+'">Geçici şifre oluştur</button>':"")+'<button class="btn sm" data-act="ysel" data-uid="">Kapat</button></div></div><p class="hint" id="yreset-out" aria-live="polite" style="margin:6px 0 0"></p><div class="mdet"><div><p class="sub" style="margin-top:0">Cari bilgiler</p>'+dl([["Firma unvanı",m.firma],["Vergi dairesi",m.vd],["Vergi / TC no",m.vno],["Fatura adresi",m.adres],["İl / ilçe",[m.il,m.ilce].filter(Boolean).join(" / ")],["Posta kodu",m.pk]])+'</div><div><p class="sub" style="margin-top:0">İletişim</p>'+dl([["Yetkili",m.yetkili],["Görevi",m.gorev],["Telefon",m.tel],["Cep",m.gsm],["E-posta",m.eposta]])+'</div><div><p class="sub" style="margin-top:0">Teslimat</p>'+dl(m.ayni===false?[["Adres",m.tadres],["İl / ilçe",[m.til,m.tilce].filter(Boolean).join(" / ")]]:[["Adres","Fatura adresiyle aynı"]])+"</div></div>"+
    '<p class="sub">Proje sepetleri</p>'+(pj==null?'<p class="hint">Yükleniyor…</p>':pj.length?'<div class="tw"><table class="lines"><thead><tr><th>Proje</th><th class="r">Kalem</th><th class="r">Ara toplam</th><th>Stok</th><th>Güncelleme</th></tr></thead><tbody>'+pj.map(c=>{const x=cartSum(c);return"<tr><td><b>"+esc(c.ad)+'</b></td><td class="r num">'+x.n+'</td><td class="r num">'+EUR.format(x.t.sub)+"</td><td>"+(x.out?'<span class="sb part">'+x.out+" kalem stokta yok</span>":'<span class="sb ok">Tamamı stokta</span>')+'</td><td class="num">'+dfmt(c.guncel)+"</td></tr>"}).join("")+"</tbody></table></div>":'<p class="hint">Proje sepeti yok.</p>')+
    '<p class="sub">Siparişler ve teklifler</p>'+(os.length?'<div class="olist">'+os.map(o=>orderCard(o,true)).join("")+"</div>":'<p class="hint">Sipariş yok.</p>')+"</div>"}
 function renderYSip(){const el=$("#yp-siparisler");const os=Y.orders.filter(o=>!Y.st||o.durum===Y.st);
@@ -1609,7 +1638,7 @@ function renderYSip(){const el=$("#yp-siparisler");const os=Y.orders.filter(o=>!
    (os.length?'<div class="olist">'+os.map(o=>orderCard(o,true)).join("")+"</div>":'<div class="empty">'+(Y.loaded?"Sipariş yok.":"Yükleniyor…")+"</div>");
   $("#yst").addEventListener("change",e=>{Y.st=e.target.value.replace(/ \(\d+\)$/,"");renderYSip()})}
 async function setStatus(sel){const o=Y.orders.find(o=>o.id===sel.dataset.oid&&o.uid===sel.dataset.uid);if(!o)return;const d=sel.value;
-  try{await CAPS.db.doc("uyeler/"+o.uid+"/siparisler/"+o.id).update({durum:d,durumTarih:nowISO()});o.durum=d;toast(o.no+" → "+d)}catch(e){toast("Durum güncellenemedi");sel.value=o.durum}}
+  try{await CAPS.db.doc(o.uid?"uyeler/"+o.uid+"/siparisler/"+o.id:"talepler/"+o.id).update({durum:d,durumTarih:nowISO()});o.durum=d;toast(o.no+" → "+d)}catch(e){toast("Durum güncellenemedi");sel.value=o.durum}}
 async function membersCsv(){const dl=CAPS.downloads;if(!dl){toast("Bu görünümde dosya indirme kullanılamıyor.");return}
   const H=["Firma unvanı","Vergi dairesi","Vergi/TC no","Fatura adresi","İl","İlçe","Posta kodu","Yetkili","Görevi","Telefon","Cep","E-posta","Teslimat adresi","Kayıt tarihi","Sipariş sayısı"];
   const q=v=>'"'+String(v==null?"":v).replace(/"/g,'""')+'"';
@@ -1649,6 +1678,9 @@ document.addEventListener("click",e=>{
   else if(a==="copy")copy();
   else if(a==="xdl")downloadXlsx();
   else if(a==="htab"){S.htab=b.dataset.t;renderHesap()}
+  else if(a==="atab"){S.atab=b.dataset.t;if(S.view==="hesap")renderHesap();if($("#d-proj").open)renderPJ()}
+  else if(a==="alogout"){PLC_SITE.logout().then(()=>{try{history.replaceState(null,"","#ana")}catch(e){}location.reload()}).catch(()=>toast("Çıkış yapılamadı"))}
+  else if(a==="yreset"){const uid=b.dataset.uid,o=$("#yreset-out");PLC_SITE.resetPw(uid).then(t=>{o.innerHTML='Geçici şifre: <b class="mono">'+esc(t)+"</b> · Üyeye iletin; giriş yaptıktan sonra Firma bilgilerim › Şifre değiştir bölümünden değiştirebilir."}).catch(e=>{o.textContent=e.message||"Şifre sıfırlanamadı."})}
   else if(a==="psave"){e.preventDefault();saveProfile(!M.prof)}
   else if(a==="pnew"){newCart($("#pj-new").value).then(c=>{if(c)renderHesap()})}
   else if(a==="psel"){M.sel=b.dataset.pid;M.delAsk=null;renderProjeler()}
@@ -1677,6 +1709,7 @@ document.addEventListener("click",e=>{
   else if(a==="xpub")publishCat();
   else if(a==="xcancel"){PENDING=null;admMsg("")}
   else if(a==="cur"){S.cur=b.dataset.cur;save();syncCur();refresh()}
+  else if(a==="pay"&&window.PLC_SITE)toast("Online kart ödemesi yakında açılacak. Siparişiniz kaydedildi; ödeme için sizinle iletişime geçeceğiz.");
   else if(a==="pay")toast("Önizlemede ödeme alınmaz. Canlı sitede bu düğme ödeme kuruluşunun güvenli ödeme sayfasını açar.");
 });
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMega()});
@@ -1689,7 +1722,7 @@ document.addEventListener("change",e=>{const t=e.target;
   else if(t.id==="pn-note"){const c=getCart(t.dataset.pid);if(c){c.not=t.value.slice(0,2000);putCart(c)}}
   else if(t.tagName==="SELECT"&&t.dataset.oid)setStatus(t)});
 document.addEventListener("input",e=>{const t=e.target;if(t.classList&&t.classList.contains("rb-in"))t.setAttribute("list",/^ai/i.test(t.value)?"dl-rs":"dl-sku")});
-document.addEventListener("submit",e=>{if(e.target.id==="pform"){e.preventDefault();saveProfile(!M.prof)}});
+document.addEventListener("submit",e=>{if(e.target.id==="pform"){e.preventDefault();saveProfile(!M.prof)}else if(e.target.id==="aform"){e.preventDefault();doAuth()}else if(e.target.id==="pwform"){e.preventDefault();doPw()}});
 window.MH=hoverMenu($("#mega .mega-in"),$("#mega-l"),$("#mega-r"));
 window.HH=hoverMenu($("#hcat"),$("#hcat-l"),$("#hcat-f"));
 $("#hcat-l").innerHTML=catList();

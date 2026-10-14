@@ -3,6 +3,9 @@
 #   FTP_SERVER    ör. plc-market.com.tr
 #   FTP_USERNAME  İHS FTP kullanıcı adı
 #   FTP_PASSWORD  İHS FTP şifresi
+# Canlı mağaza için (yoksa site statik demo olarak yayınlanır):
+#   DB_HOST, DB_NAME, DB_USER, DB_PASS  İHS MySQL veritabanı bilgileri
+#   ADMIN_SETUP_TOKEN                   /api/kurulum.php sayfasında yönetici hesabı açmak için (en az 20 karakter)
 # İsteğe bağlı değişkenler (aynı sayfada Variables sekmesi):
 #   FTP_DIR         web kök klasörü, sonu / ile biter. Varsayılan: httpdocs/ (İHS)
 #   FTP_PROTOCOL    ftps (varsayılan) ya da ftp
@@ -30,6 +33,11 @@ jobs:
       - name: Siteyi hazırla
         env:
           HTTPS_REDIRECT: ${{ vars.HTTPS_REDIRECT || '1' }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
+          ADMIN_SETUP_TOKEN: ${{ secrets.ADMIN_SETUP_TOKEN }}
         run: python3 tools/build_site.py src/plc-market.html site
 
       - name: FTP bilgileri eksik
