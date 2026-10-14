@@ -1,11 +1,12 @@
 # main dalına her gönderimde siteyi hazırlar ve FTP ile İHS'deki barındırmaya yükler.
 # Gerekli gizli değerler (Settings > Secrets and variables > Actions > Secrets):
-#   FTP_SERVER    ör. ftp.plc-market.com.tr
+#   FTP_SERVER    ör. plc-market.com.tr
 #   FTP_USERNAME  İHS FTP kullanıcı adı
 #   FTP_PASSWORD  İHS FTP şifresi
 # İsteğe bağlı değişkenler (aynı sayfada Variables sekmesi):
 #   FTP_DIR         web kök klasörü, sonu / ile biter (ör. httpdocs/ ya da ./). Varsayılan: ./
 #   FTP_PROTOCOL    ftps (varsayılan) ya da ftp
+#   FTP_SECURITY    loose (varsayılan; paylaşımlı sunucunun sertifikası alan adıyla eşleşmeyebilir) ya da strict
 #   HTTPS_REDIRECT  1 olursa http adresleri https'e yönlenir (SSL kurulduktan sonra)
 name: Siteyi İHS'ye yükle
 
@@ -43,5 +44,6 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          security: ${{ vars.FTP_SECURITY || 'loose' }}
           local-dir: ./site/
           server-dir: ${{ vars.FTP_DIR || './' }}
