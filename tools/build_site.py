@@ -41,6 +41,10 @@ HTTPS_OFF = '''# http -> https yönlendirmesi kapalı. SSL kurulunca GitHub'da H
 '''
 open(os.path.join(outdir, '.htaccess'), 'w').write('''# PLC Market demo
 DirectoryIndex index.html
+# Otomatik yayın aracının durum dosyası dışarıdan okunmasın
+<Files ".ftp-deploy-sync-state.json">
+  Require all denied
+</Files>
 <IfModule mod_deflate.c>
   AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
 </IfModule>
