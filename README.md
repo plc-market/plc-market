@@ -61,6 +61,12 @@ Yayını elle başlatmak için: **Actions** › **Siteyi İHS'ye yükle** › **
 - **İstek güvenliği:** tüm API istekleri `X-PLC` başlığı ve aynı köken denetiminden geçer.
 - **Gereksinim:** PHP 8.0 ya da üzeri, PDO MySQL, mbstring.
 
+## Katalog verisi
+
+- Sayfaya gömülü katalog `Siemens_Otomasyon_Fiyat_Listesi_Site_Stoklu.xlsx` dosyasından `tools/rows.py` ile üretilir. Stok adedi **Toplam Ürün Sayısı** sütunudur (formül hesaplanmamışsa bayi stok sütunlarının toplamı); **Stok Adedi** sütunu varsa o kullanılır.
+- Yönetim › Katalog'dan yüklenen Excel, gömülü katalogun yerine geçer.
+- Ürün bazında kategori değişiklikleri `katalog/kategoriler` belgesinde tutulur (`m`: sipariş no → kategori yolu). Yönetim › Resimler'deki satır seçicisinden ya da Yönetim › Katalog'daki kategori Excel'i ile değiştirilir; aynı yerden Excel olarak indirilir.
+
 ## Sonraki adımlar
 
 - Online kart ödemesi (iyzico ya da PayTR). Şu an siparişler ödeme bekliyor olarak kaydedilir.
