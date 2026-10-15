@@ -493,6 +493,8 @@ pre.order{margin:14px 0 0;padding:14px;background:var(--surface);border:1px soli
   .detail .pic{height:170px}.detail .pic .ill{max-width:130px;max-height:130px}
   .pick{grid-template-columns:minmax(0,1fr) auto}.pick .mono{grid-column:1/-1}
 }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .brandimg{filter:brightness(1.75) saturate(1.1)}}
+:root[data-theme="dark"] .brandimg{filter:brightness(1.75) saturate(1.1)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 
@@ -590,9 +592,8 @@ pre.order{margin:14px 0 0;padding:14px;background:var(--surface);border:1px soli
     <section class="wrap sec" aria-labelledby="kosul-t">
       <div class="sec-h"><h2 id="kosul-t">Sipariş koşulları</h2></div>
       <div class="terms">
-        <div><h3>Teslimat</h3><p>Stoktaki ürünler hafta içi 15:00'e kadar verilen siparişlerde aynı gün kargoya verilir. Tedarik ürünlerinde süre ürün kartında yazar.</p></div>
+        <div><h3>Teslimat</h3><p>Stoktaki ürünler iki gün içinde kargoya verilir. Tedarik ürünlerinde süre ürün kartında yazar.</p></div>
         <div><h3>Ödeme</h3><p>Fiyatlar Euro bazlıdır. Ödeme TL olarak alınır: sipariş onaylandığı anda tutar TCMB döviz satış kuruyla TL'ye çevrilir ve kartınızdan bu TL tutar çekilir. Havale/EFT ve onaylı firmalar için cari hesap da kullanılabilir. Her siparişe e-fatura ya da e-arşiv fatura kesilir.</p></div>
-        <div><h3>Adet indirimi</h3><p>Aynı üründen 5 adet ve üzeri %3, 10 adet ve üzeri %5, 25 adet ve üzeri %8 indirim sepette kendiliğinden uygulanır.</p></div>
         <div><h3>İade</h3><p>Ambalajı açılmamış ürünler 14 gün içinde iade edilebilir. Özel tedarik ürünleri iade kapsamı dışındadır.</p></div>
       </div>
     </section>
