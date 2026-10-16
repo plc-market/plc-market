@@ -392,6 +392,9 @@ dialog.modal.small{width:min(520px,calc(100% - 24px))}
 .rr-s{font-size:12px;color:var(--muted)}
 .rr-a{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
 .rr-k{display:inline-flex;gap:6px;align-items:center}.rr-cat{max-width:220px;font:inherit;font-size:13px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:inherit}.rr-kd{color:var(--warn)}
+.mi:has(img.ph){background:#fff;padding:1px}.mi img.ph{width:100%;height:100%;object-fit:contain}
+.l2h{display:inline-flex;align-items:center;gap:8px}.l2h .mi{width:28px;height:28px;flex:none}
+.rcs-h{grid-template-columns:minmax(0,1fr)}.rr.rc .rr-m b{font-size:14px}.rr.rc.rcsub{padding-left:28px}
 .rr-more{padding:8px 12px;font-size:13px;color:var(--muted)}
 [data-drop].drag{outline:2px dashed var(--primary);outline-offset:-3px;background:var(--primary-soft)}
 .rb{margin-bottom:14px}
@@ -1070,7 +1073,7 @@ function buyHtml(p){const q=S.cart[p.id];
   return q?'<div class="step"><button data-act="dec" data-id="'+p.id+'" aria-label="Azalt">−</button><span class="num">'+q+'</span><button data-act="inc" data-id="'+p.id+'" aria-label="Artır">+</button></div>'
           :'<button class="btn primary sm" data-act="add" data-id="'+p.id+'">Sepete ekle</button>'}
 const card=p=>'<article class="card">'+pic(p)+'<div class="card-b"><div class="meta"><span class="mono">'+p.id+'</span><span class="mono">'+esc(p.brand)+'</span></div><h3><button class="link" data-act="open" data-id="'+p.id+'">'+esc(p.name)+'</button></h3><p class="spec">'+esc(p.line)+"</p>"+stockHtml(p)+'<div class="buy"><div class="price"><b class="num">'+show(p.price)+"</b><small>"+vatLabel()+" / "+esc(p.unit)+""+"</small></div>"+buyHtml(p)+"</div></div></article>";
-const tile=(act,type,tone,name,n)=>'<button class="tile" data-act="go" '+act+'><span class="pic">'+ill(type,tone)+'</span><span class="t"><b>'+esc(name)+"</b><small>"+(typeof n==="number"?(n?n+" ürün":"Teklifle tedarik"):n)+"</small></span></button>";
+const tile=(act,type,tone,name,n,pk)=>'<button class="tile" data-act="go" '+act+'><span class="pic">'+(pk?cvis(pk[0],pk[1],type,tone):ill(type,tone))+'</span><span class="t"><b>'+esc(name)+"</b><small>"+(typeof n==="number"?(n?n+" ürün":"Teklifle tedarik"):n)+"</small></span></button>";
 
 /* ---------- gezinme ---------- */
 function setHash(){const h=S.view==="hesap"?"hesap":S.view==="yonetim"?"yonetim":S.view==="home"?"ana":S.grp?"g-"+S.grp:S.l2?"a-"+S.l2:S.cat!=="all"?"k-"+S.cat:"katalog";try{if(location.hash!=="#"+h)history.replaceState(null,"","#"+h)}catch(e){}}
@@ -1101,11 +1104,11 @@ function list(){const t=low(S.q).split(/\s+/).filter(Boolean);
   if(S.sort==="asc")r.sort((a,b)=>a.price-b.price);else if(S.sort==="desc")r.sort((a,b)=>b.price-a.price);else if(S.sort==="name")r.sort((a,b)=>a.name.localeCompare(b.name,"tr"));
   return r}
 function renderNav(){if(!$("#mega").hidden)renderMega()}
-const mi=(type,tone)=>'<span class="mi">'+ill(type,tone)+"</span>";
+const mi=(type,tone,pk)=>'<span class="mi">'+(pk?cvis(pk[0],pk[1],type,tone):ill(type,tone))+"</span>";
 const chev='<svg class="chev" viewBox="0 0 8 12" aria-hidden="true"><path d="M2 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
-const catList=()=>CATS.map(k=>'<li><button data-act="megacat" data-mc="'+k.id+'" aria-current="false">'+mi(k.ill,k.tone)+'<span>'+esc(k.name)+"</span>"+chev+"</button></li>").join("");
+const catList=()=>CATS.map(k=>'<li><button data-act="megacat" data-mc="'+k.id+'" aria-current="false">'+mi(k.ill,k.tone,["c",k.id])+'<span>'+esc(k.name)+"</span>"+chev+"</button></li>").join("");
 function flyHTML(k){return'<div class="mega-h"><button class="link mega-back" data-act="megaback">‹ Tüm kategoriler</button><h2>'+esc(k.name)+'</h2><button class="btn sm" data-act="go" data-cat="'+k.id+'">Tümünü gör</button></div><div class="mega-g">'+
-   k.l2s.map(a=>{const g=L2[a];return'<section><h3><button class="link" data-act="go" data-l2="'+a+'">'+esc(g.name)+"</button></h3><ul>"+g.l3s.map(x=>'<li><button data-act="go" data-grp="'+x+'">'+mi(GR[x].ill,GR[x].tone)+"<span>"+esc(GR[x].name)+"</span>"+(GR[x].n?'<span class="c">'+GR[x].n+"</span>":"<span></span>")+chev+"</button></li>").join("")+"</ul></section>"}).join("")+"</div>"}
+   k.l2s.map(a=>{const g=L2[a];return'<section><h3><button class="link l2h" data-act="go" data-l2="'+a+'">'+(ent(ckey("l",a))?mi(g.ill,g.tone,["l",a]):"")+esc(g.name)+"</button></h3><ul>"+g.l3s.map(x=>'<li><button data-act="go" data-grp="'+x+'">'+mi(GR[x].ill,GR[x].tone,["g",x])+"<span>"+esc(GR[x].name)+"</span>"+(GR[x].n?'<span class="c">'+GR[x].n+"</span>":"<span></span>")+chev+"</button></li>").join("")+"</ul></section>"}).join("")+"</div>"}
 function renderMega(){
   $("#mega-l").innerHTML=catList();const r=$("#mega-r");
   if(isNarrow()&&$("#mega").classList.contains("drill")&&CAT[S.megaCat]){r.innerHTML=flyHTML(CAT[S.megaCat]);r.hidden=false;r.style.width=""}else{r.hidden=true;r.innerHTML=""}}
@@ -1134,7 +1137,7 @@ function renderScene(){
    dv("mcb",3,17,54,1.1)+dv("mpcb",null,136,54,1.1)+dv("contactor",null,252,54,1.1)+dv("psu",null,371,54,1.1)+
    dv("plc",null,14,222,1.15)+dv("relay",null,146,226,1.05)+dv("module","safe",232,226,1.05)+dv("terminal",null,286,226,1.05)+dv("terminal","pe",334.3,226,1.05)+dv("vfd",null,388,222,1.15)+"</svg>"}
 function renderHome(){
-  $("#home-cats").innerHTML=CATS.map(k=>tile('data-cat="'+k.id+'"',k.ill,k.tone,k.name,k.n)).join("");
+  $("#home-cats").innerHTML=CATS.map(k=>tile('data-cat="'+k.id+'"',k.ill,k.tone,k.name,k.n,["c",k.id])).join("");
   const pickIds=a=>a.filter(i=>BY[i]).map(i=>card(BY[i])).join("");
   const firstOf=(g,n)=>P.filter(p=>p.grp===g).slice(0,n);
   $("#feat-drv").innerHTML=pickIds(["6SL3210-5BE17-5UV1","6SL3210-5BE21-5UV1","6SL3210-5BE22-2UV1","6SL3210-5BE24-0UV1","6SL3210-1KE15-8UF2","6SL3210-1KE17-5UF1","6SL3210-1KE18-8UF1","6SL3210-1KE21-7UF1"]);
@@ -1152,9 +1155,9 @@ function renderList(){
     return tb('data-cat="'+kk.id+'"',kk.name,kk.n,open&&!a2)+(open?"<ul>"+kk.l2s.map(x=>"<li>"+tb('data-l2="'+x+'"',L2[x].name,L2[x].n,S.l2===x&&!g)+(S.l2===x?"<ul>"+L2[x].l3s.map(y=>"<li>"+tb('data-grp="'+y+'"',GR[y].name,GR[y].n,S.grp===y)+"</li>").join("")+"</ul>":"")+"</li>").join("")+"</ul>":"")}).join("");
   const subs=$("#subs");
   if(S.q||g){subs.hidden=true;subs.innerHTML=""}
-  else if(a2){subs.hidden=false;subs.className="tiles sm";subs.innerHTML=a2.l3s.map(x=>tile('data-grp="'+x+'"',GR[x].ill,GR[x].tone,GR[x].name,GR[x].n)).join("")}
-  else if(k){subs.hidden=false;subs.className="l2grid";subs.innerHTML=k.l2s.map(x=>{const t=L2[x];return'<section class="l2card"><h3><button class="link" data-act="go" data-l2="'+x+'">'+esc(t.name)+'</button><span class="c">'+t.n+"</span></h3><ul>"+t.l3s.map(y=>'<li><button data-act="go" data-grp="'+y+'">'+mi(GR[y].ill,GR[y].tone)+"<span>"+esc(GR[y].name)+"</span>"+(GR[y].n?'<span class="c">'+GR[y].n+"</span>":"<span></span>")+chev+"</button></li>").join("")+"</ul></section>"}).join("")}
-  else{subs.hidden=false;subs.className="tiles";subs.innerHTML=CATS.map(kk=>tile('data-cat="'+kk.id+'"',kk.ill,kk.tone,kk.name,kk.n)).join("")}
+  else if(a2){subs.hidden=false;subs.className="tiles sm";subs.innerHTML=a2.l3s.map(x=>tile('data-grp="'+x+'"',GR[x].ill,GR[x].tone,GR[x].name,GR[x].n,["g",x])).join("")}
+  else if(k){subs.hidden=false;subs.className="l2grid";subs.innerHTML=k.l2s.map(x=>{const t=L2[x];return'<section class="l2card"><h3><button class="link l2h" data-act="go" data-l2="'+x+'">'+(ent(ckey("l",x))?mi(t.ill,t.tone,["l",x]):"")+esc(t.name)+'</button><span class="c">'+t.n+"</span></h3><ul>"+t.l3s.map(y=>'<li><button data-act="go" data-grp="'+y+'">'+mi(GR[y].ill,GR[y].tone,["g",y])+"<span>"+esc(GR[y].name)+"</span>"+(GR[y].n?'<span class="c">'+GR[y].n+"</span>":"<span></span>")+chev+"</button></li>").join("")+"</ul></section>"}).join("")}
+  else{subs.hidden=false;subs.className="tiles";subs.innerHTML=CATS.map(kk=>tile('data-cat="'+kk.id+'"',kk.ill,kk.tone,kk.name,kk.n,["c",kk.id])).join("")}
   const bs=[...new Set(scope().map(p=>p.brand))].sort((a,b)=>a.localeCompare(b,"tr"));
   [...S.brands].forEach(b=>{if(!bs.includes(b))S.brands.delete(b)});
   $("#brands").innerHTML=bs.map((b,i)=>'<li><label class="check"><input type="checkbox" id="br-'+i+'" data-brand="'+esc(b)+'"'+(S.brands.has(b)?" checked":"")+"> "+esc(b)+"</label></li>").join("");
@@ -1317,13 +1320,17 @@ function picOf(p){let e=ent(ukey(p.id));if(e)return{k:"urun",e};e=ent(fkey(p));i
 const bsrc=id=>IMG.local[id]||"/_blob/"+id;
 const imgTag=(e,fb)=>'<img class="ph" src="'+esc(bsrc(e.i))+'" alt="" loading="lazy" decoding="async" data-fb="'+esc(fb)+'">';
 const fbOf=p=>p.ill+"|"+(p.tone||"");
+/* kategori görselleri: k_c_<ana>, k_l_<grup>, k_g_<alt> */
+const ckey=(t,id)=>"k_"+t+"_"+String(id).replace(/[^A-Za-z0-9-]/g,"_");
+const CNODE=(t,id)=>t==="c"?CAT[id]:t==="l"?L2[id]:GR[id];
+function cvis(t,id,il,tone){const e=ent(ckey(t,id));return e?imgTag(e,il+"|"+(tone||"")):ill(il,tone)}
 function vis(p){const r=picOf(p);return r.e?imgTag(r.e,fbOf(p)):ill(p.ill,p.tone)}
 function visCap(p){const r=picOf(p);if(r.k==="cizim")return'<p class="pcap">Temsili çizim</p>';const a=[];
   if(r.k==="aile")a.push("Ürün ailesi görseli; ürün farklı görünebilir");if(r.e.k==="s"&&IMG.ayar.kredi&&IMG.ayar.metin)a.push("Görsel: "+IMG.ayar.metin);
   return a.length?'<p class="pcap">'+esc(a.join(" · "))+"</p>":""}
 document.addEventListener("error",e=>{const t=e.target;if(t&&t.tagName==="IMG"&&t.dataset&&t.dataset.fb!=null){const x=t.dataset.fb.split("|");t.outerHTML=ill(x[0],x[1]||undefined)}},true);
 function rebuildImg(){const m={};for(const n in IMG.sh){const s=IMG.sh[n]||{};for(const k in s)if(s[k]&&s[k].i)m[k]=s[k]}IMG.map=m;if(IMG.ok>=NSH)IMG.live=true}
-let imgT;function imgChanged(){clearTimeout(imgT);imgT=setTimeout(()=>{if(S.view==="home")renderHome();else if(S.view==="list")renderList();else if(S.view==="yonetim"&&S.ytab==="resimler")renderResBody();
+let imgT;function imgChanged(){clearTimeout(imgT);imgT=setTimeout(()=>{const hl=$("#hcat-l");if(hl)hl.innerHTML=catList();if(!$("#mega").hidden)renderMega();if(S.view==="home")renderHome();else if(S.view==="list")renderList();else if(S.view==="yonetim"&&S.ytab==="resimler")renderResBody();
   renderCart();const d=$("#d-detail");if(d.open&&d.dataset.id)renderDetail(d.dataset.id)},150)}
 function watchImgs(db){for(let n=0;n<NSH;n++){let first=true;
     db.doc("resimler/p"+n).onSnapshot(sn=>{IMG.ex[n]=sn.exists;IMG.sh[n]=sn.exists?Object.assign({},(sn.data()||{}).m||{}):{};if(first){first=false;IMG.ok++}rebuildImg();if(IMG.live)imgChanged()},()=>{})}
@@ -1379,7 +1386,7 @@ const chip=k=>k==="urun"?'<span class="sb ok">Ürün fotoğrafı</span>':k==="ai
 const delBtn=(k,lab)=>RS.arm===k?'<button class="btn sm danger" data-act="rsdelok" data-k="'+k+'" data-lab="'+esc(lab)+'">Silinsin mi?</button>':'<button class="btn sm" data-act="rsdel" data-k="'+k+'">Sil</button>';
 function acts(k,lab,url){const e=ent(k);if(RS.busy===k)return'<span class="rr-a"><span class="hint" style="margin:0">Yükleniyor…</span></span>';
   return'<span class="rr-a">'+(CAPS.assets?'<button class="btn sm'+(e?"":" primary")+'" data-act="rsup" data-k="'+k+'" data-lab="'+esc(lab)+'">'+(e?"Değiştir":"Yükle")+"</button>"+(e?delBtn(k,lab):""):"")+
-    '<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener" title="Siemens görsel veritabanında ara">Siemens ↗</a></span>'}
+    (url?'<a class="btn sm" href="'+esc(url)+'" target="_blank" rel="noopener" title="Siemens görsel veritabanında ara">Siemens ↗</a>':"")+'</span>'}
 const canKat=()=>!!(ADMIN&&CAPS.db);
 let KOPTS=null;function katOpts(){if(KOPTS)return KOPTS;let h="";CATS.forEach(c=>c.l2s.forEach(l=>{const gs=L2[l].l3s;if(!gs.length)return;
   h+='<optgroup label="'+esc(c.name+" › "+L2[l].name)+'">'+gs.map(g=>'<option value="'+g+'">'+esc(GR[g].name)+"</option>").join("")+"</optgroup>"}));return KOPTS=h}
@@ -1432,21 +1439,29 @@ function resRow(p){const k=ukey(p.id),r=picOf(p),e=ent(k);
 function resFam(fk,fam,ps,st){const e=ent(fk),p0=ps[0],tot=st.F[fk]?st.F[fk].n:ps.length,u=ps.filter(p=>ent(ukey(p.id))).length;
   return'<header class="rf-h" data-drop="'+fk+'" data-lab="'+esc(fam)+'"><span class="rf-p">'+(e?imgTag(e,fbOf(p0)):ill(p0.ill,p0.tone))+'</span><span class="rr-m"><b>'+esc(fam)+"</b>"+
     '<span class="rr-s">'+tot+" ürün · "+u+" ürün fotoğrafı · aile görseli "+(e?"var ("+esc(e.k==="o"?"kendi":"Siemens")+")":"yok, temsili çizim")+"</span></span>"+acts(fk,fam,famUrl(fam,p0.id))+"</header>"}
+function resCatRow(t,id,lvl){const n=CNODE(t,id),k=ckey(t,id),e=ent(k),lab=n.name,typ=t==="c"?"Ana kategori":t==="l"?"Grup":"Alt kategori",
+    il=n.ill,tone=n.tone;
+  return'<div class="rr rc'+(lvl?" rcsub":"")+'" data-drop="'+k+'" data-lab="'+esc(lab)+'"><span class="rr-p">'+(e?imgTag(e,il+"|"+(tone||"")):ill(il,tone))+'</span><span class="rr-m"><b>'+esc(lab)+'</b><span class="rr-s">'+typ+" · "+NUM.format(n.n||0)+" ürün"+(e?" · "+esc((e.k==="o"?"Kendi görselimiz":"Siemens")+" · "+(e.d||"")):"")+"</span></span>"+
+    (e?'<span class="sb ok">Kategori görseli</span>':'<span class="sb na">Temsili çizim</span>')+acts(k,lab,null)+"</div>"}
+function resCats(){if(!RS.sel)return"";const t=RS.sel.slice(0,1),id=RS.sel.slice(2),n=CNODE(t,id);if(!n)return"";
+  const kids=t==="c"?n.l2s.filter(x=>L2[x].n).map(x=>resCatRow("l",x,1)):t==="l"?n.l3s.filter(x=>GR[x].n).map(x=>resCatRow("g",x,1)):[];
+  return'<section class="rf rcs"><header class="rf-h rcs-h"><span class="rr-m"><b>Kategori görselleri</b><span class="rr-s">Katalog ağacında, menülerde ve kategori kutularında görünür. Görsel yoksa temsili çizim gösterilir.'+(kids.length?" Alt kategorilere de buradan ekleyebilirsiniz.":"")+"</span></span></header>"+resCatRow(t,id,0)+kids.join("")+"</section>"}
 function resOverview(st){return'<div class="rs-ov"><p class="hint" style="margin:0 0 10px">Soldaki ağaçtan bir kategori seçin ya da ürün koduyla arayın. Sayılar, fotoğrafı olan ürün / toplam ürün sayısıdır.</p><div class="rs-cards">'+
-  CATS.filter(c=>c.n).map(c=>{const s=st.c[c.id];return'<button class="rs-card" data-act="rssel" data-n="c:'+c.id+'"><span class="pic">'+ill(c.ill,c.tone)+"</span><span><b>"+esc(c.name)+"</b><small>"+s.u+" ürün fotoğrafı · "+s.a+" aile görseli · "+(s.n-s.u-s.a)+" çizim</small></span></button>"}).join("")+"</div></div>"}
+  CATS.filter(c=>c.n).map(c=>{const s=st.c[c.id];return'<button class="rs-card" data-act="rssel" data-n="c:'+c.id+'"><span class="pic">'+cvis("c",c.id,c.ill,c.tone)+"</span><span><b>"+esc(c.name)+"</b><small>"+s.u+" ürün fotoğrafı · "+s.a+" aile görseli · "+(s.n-s.u-s.a)+" çizim</small></span></button>"}).join("")+"</div></div>"}
 function renderResBody(){const el=$("#yp-resimler");if(!el||!el.dataset.ready)return;const st=resStats(),T=st.T;
-  const us=RS.usage;$("#rs-stats").innerHTML='<div><b>'+NUM.format(T.u)+'</b><span>ürün fotoğrafı / '+NUM.format(T.n)+"</span></div><div><b>"+NUM.format(T.fi)+"</b><span>aile görseli / "+NUM.format(T.f)+" aile</span></div><div><b>"+NUM.format(T.n-T.u-T.a)+"</b><span>ürün temsili çizimle</span></div>"+
+  const us=RS.usage;$("#rs-stats").innerHTML='<div><b>'+NUM.format(T.u)+'</b><span>ürün fotoğrafı / '+NUM.format(T.n)+"</span></div><div><b>"+NUM.format(T.fi)+"</b><span>aile görseli / "+NUM.format(T.f)+" aile</span></div><div><b>"+NUM.format(T.n-T.u-T.a)+"</b><span>ürün temsili çizimle</span></div>"+(()=>{const ks=[];CATS.forEach(c=>{ks.push(ckey("c",c.id));c.l2s.forEach(l=>{ks.push(ckey("l",l));L2[l].l3s.forEach(g=>ks.push(ckey("g",g)))})});return"<div><b>"+NUM.format(ks.filter(k=>ent(k)).length)+"</b><span>kategori görseli / "+NUM.format(ks.length)+" kategori</span></div>"})()+
     (us?"<div><b>"+kb(us.bytes)+"</b><span>"+NUM.format(us.files)+" dosya"+(us.maxBytes?" · sınır "+kb(us.maxBytes):"")+"</span></div>":"");
   if(CAPS.assets&&RS.usage===null){RS.usage=false;CAPS.assets.list().then(r=>{RS.usage=r.usage||false;renderResBody()}).catch(()=>{})}
   const tr=$("#rs-tree"),sc=tr.scrollTop;tr.innerHTML=resTree(st);tr.scrollTop=sc;
   const ps=resProducts(),out=$("#rs-list");
   if(!ps){out.innerHTML=resOverview(st);return}
   const title=RS.q.trim()?'"'+esc(RS.q.trim())+'" araması':(()=>{const [t,id]=[RS.sel.slice(0,1),RS.sel.slice(2)];return esc(t==="g"?CAT[GR[id].cat].name+" › "+L2[GR[id].l2].name+" › "+GR[id].name:t==="l"?CAT[L2[id].cat].name+" › "+L2[id].name:CAT[id].name)})();
-  if(!ps.length){out.innerHTML='<div class="rs-tt">'+title+'</div><div class="empty">'+(RS.filt!=="all"?"Bu filtreye uyan ürün yok.":"Ürün bulunamadı.")+"</div>";return}
+  const cb=RS.q.trim()?"":resCats();
+  if(!ps.length){out.innerHTML='<div class="rs-tt">'+title+'</div>'+cb+'<div class="empty">'+(RS.filt!=="all"?"Bu filtreye uyan ürün yok.":"Ürün bulunamadı.")+"</div>";return}
   const groups=new Map();ps.forEach(p=>{const k=fkey(p)||"_";if(!groups.has(k))groups.set(k,[]);groups.get(k).push(p)});
   let shown=0,h="";for(const [fk,arr] of groups){if(shown>=RS.lim)break;const rows=arr.slice(0,RS.lim-shown);shown+=rows.length;
     h+='<section class="rf">'+(fk==="_"?'<header class="rf-h"><span class="rr-m"><b>Ürün ailesi tanımsız</b></span></header>':resFam(fk,arr[0].fam,arr,st))+rows.map(resRow).join("")+(rows.length<arr.length?'<div class="rr-more">Bu ailede '+(arr.length-rows.length)+" ürün daha var</div>":"")+"</section>"}
-  out.innerHTML='<div class="rs-tt">'+title+' <span class="hint">'+NUM.format(ps.length)+" ürün · "+groups.size+" aile</span></div>"+h+(shown<ps.length?'<button class="btn" data-act="rsmore">Daha fazla göster ('+NUM.format(ps.length-shown)+")</button>":"")}
+  out.innerHTML='<div class="rs-tt">'+title+' <span class="hint">'+NUM.format(ps.length)+" ürün · "+groups.size+" aile</span></div>"+cb+h+(shown<ps.length?'<button class="btn" data-act="rsmore">Daha fazla göster ('+NUM.format(ps.length-shown)+")</button>":"")}
 function renderRes(){const el=$("#yp-resimler");if(!el.dataset.ready){el.dataset.ready="1";
     el.innerHTML='<div class="rs-stats" id="rs-stats"></div>'+
      '<div class="ytools"><input id="rs-q" type="search" placeholder="Ürün kodu ya da ad ile ara (ör. 6SL3210-5BB13)" autocomplete="off">'+
@@ -1457,6 +1472,7 @@ function renderRes(){const el=$("#yp-resimler");if(!el.dataset.ready){el.dataset
      '<details class="rs-set"><summary>Nasıl kullanılır · kaynak ibaresi</summary><div class="rs-set-b"><ol class="adm-how">'+
      "<li>Ağaçtan bir kategori seçin ya da ürün koduyla arayın.</li><li><b>Siemens ↗</b>, ürünün Siemens görsel veritabanındaki sonuçlarını açar. Uygun görseli indirin.</li>"+
      "<li><b>Yükle</b> ile görseli ürüne ya da ailenin başlığına ekleyin. Dosyayı satırın üzerine sürükleyip bırakabilirsiniz. <b>Değiştir</b> eskisinin yerine koyar, <b>Sil</b> kaldırır.</li>"+
+     "<li>Ağaçtan bir ana kategori, grup ya da alt kategori seçince listenin başında <b>Kategori görselleri</b> çıkar. Seçtiğiniz kategoriye ve bir altındaki kategorilere buradan görsel ekleyebilirsiniz; görsel ana sayfadaki kutularda, menülerde ve katalog ağacında temsili çizimin yerine görünür.</li>"+
      "<li>Aile görseli, o ailede kendi fotoğrafı olmayan bütün ürünlerde görünür. Hiçbiri yoksa temsili çizim gösterilir.</li>"+
      "<li>Toplu yüklemede dosya adını sipariş numarası yapın (ör. <span class=\"mono\">6ES7214-1AG40-0XB0.jpg</span>). Eşleşmeyenleri listede elle atarsınız.</li>"+
      "<li>Büyük görseller yüklenirken 1000 piksele küçültülür.</li><li>Ürünün kategorisini satırdaki seçiciden değiştirip <b>Kaydet</b>'e basın. Değişiklik bütün ziyaretçiler için geçerli olur; Katalog sekmesinden Excel olarak indirebilirsiniz.</li></ol>"+
@@ -1475,7 +1491,7 @@ function renderRes(){const el=$("#yp-resimler");if(!el.dataset.ready){el.dataset
   $("#rs-kr").checked=IMG.ayar.kredi;if(document.activeElement!==$("#rs-kt"))$("#rs-kt").value=IMG.ayar.metin;
   $("#rs-bulkl").hidden=!CAPS.assets;$("#rs-src").hidden=!CAPS.assets;renderResBody();renderBulk()}
 async function setImg(key,f,lab){if(RS.busy){toast("Önceki yükleme sürüyor");return}RS.busy=key;renderResBody();
-  try{const old=ent(key),e=await storeImg(f,RS.src);e[key.startsWith("a_")?"f":"s"]=String(lab).slice(0,160);await putImgs({[key]:e});
+  try{const old=ent(key),e=await storeImg(f,RS.src);e[key.startsWith("a_")?"f":key.startsWith("k_")?"c":"s"]=String(lab).slice(0,160);await putImgs({[key]:e});
     if(old&&old.i!==e.i&&!usedId(old.i,key))CAPS.assets.delete(old.i).catch(()=>{});toast((old?"Görsel değiştirildi: ":"Görsel eklendi: ")+lab)}
   catch(err){toast("Yüklenemedi: "+errTxt(err))}finally{RS.busy=null;RS.usage=null;renderResBody()}}
 async function delImg(key,lab){const old=ent(key);RS.arm=null;if(!old){renderResBody();return}
