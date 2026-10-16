@@ -175,7 +175,7 @@ function can_read(array $parts, ?array $u): bool {
         if (count($parts) === 1) return is_admin($u);
         return is_admin($u) || ($u !== null && $parts[1] === $u['uid']);
     }
-    if ($top === 'talepler') return is_admin($u);
+    if ($top === 'talepler' || $top === 'takip') return is_admin($u);
     return false;
 }
 // Yazma kuralı. $op: set | update | delete; $exists: belge şu an var mı
@@ -183,7 +183,7 @@ function can_write(string $op, array $parts, ?array $u, bool $exists): bool {
     $n = count($parts);
     if ($n % 2 !== 0) return false;
     $top = $parts[0];
-    if ($top === 'katalog' || $top === 'resimler') return is_admin($u);
+    if ($top === 'katalog' || $top === 'resimler' || $top === 'takip') return is_admin($u);
     if ($top === 'uyeler') {
         if (is_admin($u)) return true;
         if ($u === null || $parts[1] !== $u['uid']) return false;
