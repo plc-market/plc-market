@@ -126,11 +126,17 @@ try {
             if (!$cur) fail('invalid_argument', 'Belge yok.');
             $data = deep_merge(is_array($cur['data']) ? $cur['data'] : [], $data);
         }
-        if ($kind === 'set' && !$cur && is_order_path($parts)) {
+        $newOrder = $kind === 'set' && !$cur && is_order_path($parts);
+        if ($newOrder) {
             if ($parts[0] === 'talepler') { rate_limit('talep:' . client_ip(), 10, 3600); rate_hit('talep:' . client_ip()); }
+            // sipariş numarası bütün site genelinde benzersiz olmalı
+            $no = end($parts);
+            if (strlen($no) > 24) fail('invalid_argument', 'Sipariş numarası çok uzun.');
+            if (doc_get('sipno/' . $no)) fail('already_exists', 'Bu sipariş numarası kullanılıyor.', 409);
             $data = normalize_order($data, $parts);
         }
         $v = doc_put($path, $data, $u['uid'] ?? null);
+        if ($newOrder) doc_put('sipno/' . end($parts), ['p' => $path], null);
         out(['ok' => true, 'version' => $v, 'data' => is_order_path($parts) ? $data : null]);
     }
 

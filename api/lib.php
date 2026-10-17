@@ -313,6 +313,7 @@ function normalize_order(array $o, array $parts): array {
         'tarih' => gmdate('Y-m-d\TH:i:s.v\Z'),
         'durum' => $quote ? 'Teklif bekliyor' : 'Alındı',
         'proje' => isset($o['proje']) && $o['proje'] !== null ? $clean($o['proje'], 120) : null,
+        'ad' => $clean($o['ad'] ?? '', 120),
         'odeme' => $quote ? '' : $clean($o['odeme'] ?? '', 40),
         'kalemler' => $lines,
         'ara' => $sub, 'kdv' => $kdv, 'kargo' => $ship, 'toplam' => $total,
