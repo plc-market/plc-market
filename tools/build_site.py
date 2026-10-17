@@ -59,6 +59,19 @@ doc = ('<!doctype html>\n<html lang="tr">\n<head>\n<meta charset="utf-8">\n'
        + head + '\n</head>\n<body>\n' + h + '\n</body>\n</html>\n')
 os.makedirs(outdir, exist_ok=True)
 open(os.path.join(outdir, 'index.html'), 'w', encoding='utf-8').write(doc)
+
+# Yayın öncesi güvenlik: sayfadaki satır içi betiklerde sözdizimi hatası varsa yayını durdur
+# (tek bir hata bütün siteyi çalışmaz hâle getirir).
+import shutil as _sh, subprocess as _sp
+if _sh.which('node'):
+    _chk = r"""
+const fs=require('fs');const h=fs.readFileSync(process.argv[1],'utf8');
+const re=/<script(?![^>]*\bsrc=)(?![^>]*type="application\/json")[^>]*>([\s\S]*?)<\/script>/g;let m,i=0,bad=0;
+while((m=re.exec(h))){try{new Function(m[1])}catch(e){bad++;console.error('betik '+i+': '+e.message)}i++}
+if(bad)process.exit(1);console.log('betik denetimi: '+i+' betik, hata yok');"""
+    r = _sp.run(['node', '-e', _chk, os.path.join(outdir, 'index.html')])
+    if r.returncode != 0:
+        sys.exit('HATA: index.html içindeki JavaScript sözdizimi bozuk; yayın durduruldu.')
 open(os.path.join(outdir, 'robots.txt'), 'w').write('User-agent: *\nDisallow: /\n')
 
 HTTPS_ON = '''# http -> https yönlendirmesi (HTTPS_REDIRECT=1)

@@ -1904,7 +1904,7 @@ function fLineHtml(r,k,i){const x=fLine(r,i),eks=x.q-x.tah;
    fStepBtn(x.L.kargo,"Kargoya verildi","fsl",'data-i="'+i+'" data-a="kargo"')+"</div></td></tr>"}
 function fKoliPanel(r){const all=[];r.kalemler.forEach((k,i)=>(fK(r,i).koli||[]).forEach(c=>all.push({s:k.s,i,t:c.t,no:c.no})));all.sort((a,b)=>String(b.t).localeCompare(String(a.t)));
   const tot=fSum(r.kalemler,k=>k.q),done=r.kalemler.reduce((a,k,i)=>a+Math.min(k.q,(fK(r,i).koli||[]).length),0);
-  return'<div class="kpanel"><div class="kp-top"><label class="kp-in">Ürün kodunu okutun<input id="kscan" autocomplete="off" placeholder="Barkodu okutun ya da ürün kodunu yazıp Enter'a basın" aria-describedby="kmsg"></label>'+
+  return'<div class="kpanel"><div class="kp-top"><label class="kp-in">Ürün kodunu okutun<input id="kscan" autocomplete="off" placeholder="Barkodu okutun ya da ürün kodunu yazıp Enter&#39;a basın" aria-describedby="kmsg"></label>'+
    '<label class="kp-koli">Koli no<input id="kkoli" type="number" min="1" value="'+(Y.koli||1)+'"></label><button type="button" class="btn sm" data-act="fknew">Yeni koli</button>'+
    ("BarcodeDetector" in window?'<button type="button" class="btn sm" data-act="fcam">'+(Y.cam?"Kamerayı kapat":"Kamerayla okut")+"</button>":"")+'</div>'+
    (Y.cam?'<video id="kvid" playsinline muted></video>':"")+
